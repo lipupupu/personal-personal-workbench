@@ -1,4 +1,4 @@
-const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
+const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 async function callDeepSeek(messages, options = {}) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
