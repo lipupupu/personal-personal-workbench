@@ -1,0 +1,10 @@
+{
+  "name": "personal-workbench",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal workspace app with AI integration",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  }
+}

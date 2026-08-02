@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>个人工作台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(164, 180, 255, 0.42), transparent 34%),
+        radial-gradient(circle at top right, rgba(196, 222, 255, 0.5), transparent 28%),
+        linear-gradient(180deg, #f7f8ff 0%, #f5f9ff 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      color: #0f172a;
+    }
+
+    /* ===== Phone Frame ===== */
+    .phone-frame {
+      position: relative;
+      width: 390px;
+      height: 844px;
+      overflow: hidden;
+      flex-shrink: 0;
+      transform-origin: top left;
+      border-radius: 32px;
+      background: linear-gradient(180deg, #f8fbff 0%, #f4f7ff 100%);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+      border: 1px solid rgba(255,255,255,0.9);
+    }
+
+    /* ===== Screens ===== */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.76), rgba(245,248,254,0.95)),
+        linear-gradient(180deg, #f8f2ff 0%, #eef5ff 100%);
+    }
+    .screen.active { display: flex; }
+
+    /* ===== Status Bar ===== */
+    .status-bar {
+      height: 60px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(10px);
+    }
+    .status-bar .time { font-size: 15px; font-weight: 700; color: #111827; }
+    .status-bar .icons { display: none; }
+    .status-bar .icons img { height: 20px; }
+
+    /* ===== Content Area ===== */
+    .content {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding: 0 16px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .content::-webkit-scrollbar { width: 0; height: 0; }
+
+    /* ===== Common Components ===== */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0 4px;
+    }
+    .header .greeting { display: flex; flex-direction: column; gap: 4px; }
+    .header .greeting .hi { font-size: 14px; font-weight: 400; color: #6B7280; }
+    .header .greeting .date { font-size: 22px; font-weight: 600; color: #0F1419; }
+
+    .avatar {
+      display: none;
+    }
+
+    /* ===== Week Calendar ===== */
+    .week-cal {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+    }
+    .week-cal .day { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+    .week-cal .day .label { font-size: 11px; font-weight: 500; color: #9CA3AF; }
+    .week-cal .day .num { font-size: 15px; font-weight: 600; color: #1F2937; }
+    .week-cal .day.selected .label { color: #1F2937; font-weight: 600; }
+    .week-cal .day.selected .pill {
+      background: #1F2937;
+      border-radius: 11px;
+      padding: 2px 8px;
+    }
+    .week-cal .day.selected .pill .num { color: #fff; }
+
+    /* ===== Upload Card (dark) ===== */
+    .card-dark {
+      background: linear-gradient(135deg, #cdd8ff 0%, #dbe8ff 52%, #e8f4ff 100%);
+      border-radius: 22px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 12px 28px rgba(110, 136, 195, 0.2);
+      border: 1px solid rgba(255,255,255,0.7);
+    }
+    .card-dark .top { display: flex; justify-content: space-between; align-items: center; }
+    .card-dark .title-block { display: flex; flex-direction: column; gap: 4px; }
+    .card-dark .title-block .t { font-size: 17px; font-weight: 700; color: #24304a; }
+    .card-dark .title-block .s { font-size: 13px; font-weight: 400; color: rgba(36, 48, 74, 0.78); }
+    .card-dark .icon-circle {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+    .card-dark .icon-circle img { width: 20px; height: 20px; }
+    .card-dark .btns { display: flex; gap: 10px; }
+    .card-dark .btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: rgba(255,255,255,0.66);
+      border-radius: 12px; padding: 10px 14px;
+      font-size: 14px; font-weight: 600; color: #24304a;
+      border: 1px solid rgba(255,255,255,0.75);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+    }
+    .card-dark .btn img { width: 18px; height: 18px; }
+
+    /* ===== White Card ===== */
+    .card-white {
+      background: rgba(255,255,255,0.94);
+      border-radius: 18px;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
+      border: 1px solid rgba(226,232,240,0.95);
+    }
+
+    /* ===== Section Header ===== */
+    .section-head {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .section-head .t { font-size: 17px; font-weight: 600; color: #0F1419; }
+    .section-head .more { font-size: 13px; font-weight: 500; color: #1F2937; }
+
+    /* ===== Todo Item ===== */
+    .todo-item {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+    }
+    .todo-item .info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .todo-item .info .t { font-size: 14px; font-weight: 600; color: #0F1419; }
+    .todo-item .info .s { font-size: 12px; font-weight: 400; color: #9CA3AF; }
+    .todo-item .tag {
+      padding: 3px 8px; border-radius: 6px;
+      font-size: 11px; font-weight: 500; color: #1F2937;
+    }
+    .tag-green { background: #F0F7D6; }
+    .tag-purple { background: #EDE8FF; }
+    .tag-gray { background: #eef3ff; color: #4b6cc0; }
+    .tag-live {
+      background: #E8F9F0;
+      color: #0F9F7A;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+      line-height: 1.3;
+    }
+
+    /* ===== Interview Reminder ===== */
+    .reminder {
+      display: flex; align-items: center; gap: 12px; padding: 16px;
+    }
+    .reminder img.cal { width: 44px; height: 44px; }
+    .reminder .info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .reminder .info .t { font-size: 15px; font-weight: 600; color: #1F2937; }
+    .reminder .info .s { font-size: 12px; font-weight: 400; color: #6B7280; }
+
+    /* ===== Module Header ===== */
+    .module-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0;
+    }
+    .module-head .t { font-size: 22px; font-weight: 600; color: #0F1419; }
+
+    /* ===== Segmented Tab ===== */
+    .seg-tab {
+      display: flex; gap: 4px; padding: 4px;
+      background: #edf1f7;
+      border-radius: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .seg-tab .seg {
+      flex: 1; text-align: center; padding: 8px 0;
+      border-radius: 12px; font-size: 13px; font-weight: 700; color: #6b7280;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .seg-tab .seg.active {
+      background: linear-gradient(180deg, #ffffff, #f5f7ff);
+      color: #0f172a;
+      box-shadow: 0 2px 8px rgba(17, 53, 111, 0.12);
+    }
+
+    /* ===== Info Bar ===== */
+    .info-bar {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #6B7280;
+    }
+    .info-bar img { width: 16px; height: 16px; }
+
+    /* ===== Paste Email Button ===== */
+    .paste-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 14px; border-radius: 14px;
+      background: linear-gradient(180deg, #fff, #f7f8fc);
+      border: 1px solid rgba(226,232,240,0.98);
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      font-size: 13px; font-weight: 600; color: #1f2937;
+      cursor: pointer;
+    }
+    .paste-btn img { width: 18px; height: 18px; }
+
+    /* ===== App Card (Interview) ===== */
+    .app-card {
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98));
+      border: 1px solid rgba(226,232,240,0.95);
+    }
+    .app-card .card-head {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+    }
+    .app-card .logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(180deg, #f5f6fb, #e9edf8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; color: #0F1419;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .app-card .card-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .app-card .card-info .company { font-size: 15px; font-weight: 700; color: #0F1419; }
+    .app-card .card-info .pos { font-size: 12px; font-weight: 500; color: #6B7280; }
+    .app-card .divider { height: 1px; background: #EEF1F5; }
+    .app-card .card-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 320px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    .app-card .card-body::-webkit-scrollbar { width: 0; height: 0; }
+
+    .interview-box {
+      background: linear-gradient(180deg, #f8fafc, #f3f5f8);
+      border-radius: 12px; padding: 12px;
+      display: flex; flex-direction: column; gap: 8px;
+      border: 1px solid rgba(226,232,240,0.95);
+    }
+    .interview-box .row { display: flex; align-items: center; gap: 8px; }
+    .interview-box .row img { width: 16px; height: 16px; }
+    .interview-box .row span { font-size: 12px; font-weight: 600; color: #0F1419; }
+    .interview-box .src { font-size: 10px; color: #9CA3AF; }
+
+    .rec-upload {
+      display: flex; align-items: center; gap: 10px; padding: 14px;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+      border: 1px solid rgba(15,23,42,0.1);
+      border-radius: 14px;
+      box-shadow: 0 5px 14px rgba(15, 23, 42, 0.05);
+    }
+    .rec-upload img { width: 36px; height: 36px; }
+    .rec-upload .up-info { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .rec-upload .up-info .t { font-size: 12px; font-weight: 700; color: #0F1419; }
+    .rec-upload .up-info .s { font-size: 10px; color: #9CA3AF; }
+    .rec-upload .up-btn {
+      background: #111827; border-radius: 8px; padding: 6px 12px;
+      font-size: 12px; font-weight: 700; color: #fff;
+    }
+
+    .ai-review {
+      background: linear-gradient(180deg, #f5f7fb, #eff3f8);
+      border-radius: 12px; padding: 12px;
+      display: flex; flex-direction: column; gap: 10px;
+      border: 1px solid rgba(226,232,240,0.95);
+    }
+    .ai-review .ai-head { display: flex; align-items: center; gap: 6px; }
+    .ai-review .ai-head img { width: 16px; height: 16px; }
+    .ai-review .ai-head .t { font-size: 12px; font-weight: 700; color: #1F2937; }
+    .ai-review .ai-head .tag {
+      padding: 2px 6px; border-radius: 999px;
+      font-size: 10px; font-weight: 700; color: #0f9f7a;
+      background: #e8f9f0;
+    }
+    .ai-review .scores { display: flex; gap: 8px; }
+    .ai-review .score {
+      flex: 1; background: #fff; border-radius: 8px; padding: 8px;
+      display: flex; flex-direction: column; gap: 2px;
+      border: 1px solid rgba(226,232,240,0.9);
+    }
+    .ai-review .score .label { font-size: 11px; color: #6B7280; }
+    .ai-review .score .value { font-size: 15px; font-weight: 700; }
+    .ai-review .suggestion { font-size: 11px; line-height: 17px; color: #4B5563; }
+
+    .app-simple {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+    }
+    .app-simple .logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: #E8E8ED; display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; color: #0F1419;
+    }
+    .app-simple .info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .app-simple .info .company { font-size: 15px; font-weight: 600; color: #0F1419; }
+    .app-simple .info .pos { font-size: 13px; color: #6B7280; }
+    .app-simple .start-btn {
+      border: 1.5px solid #1F2937; border-radius: 8px; padding: 6px 12px;
+      font-size: 12px; font-weight: 600; color: #1F2937; cursor: pointer;
+    }
+
+    /* ===== Input Card ===== */
+    .input-card { display: flex; flex-direction: column; gap: 8px; }
+    .input-card .label-row { display: flex; align-items: center; gap: 6px; }
+    .input-card .label-row .l { font-size: 14px; font-weight: 600; color: #1F2937; }
+    .input-card .label-row .h { font-size: 12px; color: #9CA3AF; }
+    .input-card .label-row img { width: 16px; height: 16px; }
+    .input-card .box {
+      background: #fff; border: 1.5px solid #E8E8EB; border-radius: 12px;
+      padding: 12px 14px; font-size: 14px; color: #9CA3AF;
+    }
+
+    /* ===== Generate Button ===== */
+    .gen-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: #1F2937; border-radius: 14px; padding: 14px 0;
+      font-size: 15px; font-weight: 600; color: #fff; cursor: pointer;
+    }
+    .gen-btn img { width: 18px; height: 18px; }
+
+    /* ===== Result Card ===== */
+    .result-card { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .result-card .head { display: flex; justify-content: space-between; align-items: center; }
+    .result-card .head .t { font-size: 14px; font-weight: 600; color: #0F1419; }
+    .result-card .body {
+      background: #F8F9FB; border-radius: 12px; padding: 12px;
+      font-size: 13px; line-height: 20px; color: #4B5563;
+    }
+    .result-card .copy {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: #1F2937; border-radius: 10px; padding: 12px 0;
+      font-size: 14px; font-weight: 600; color: #fff; cursor: pointer;
+    }
+    .result-card .copy img { width: 16px; height: 16px; }
+
+    /* ===== Stats Card (dark) ===== */
+    .stats-card {
+      background: #1F2937; border-radius: 16px; padding: 16px;
+      display: flex; gap: 12px;
+    }
+    .stats-card .stat { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .stats-card .stat .v { font-size: 28px; font-weight: 700; color: #fff; }
+    .stats-card .stat .l { font-size: 13px; color: rgba(255,255,255,0.8); }
+
+    /* ===== Question Card ===== */
+    .q-card { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .q-card .q-head { display: flex; justify-content: space-between; align-items: center; }
+    .q-card .q-head .t { font-size: 15px; font-weight: 600; color: #0F1419; }
+    .q-card .section { display: flex; flex-direction: column; gap: 4px; }
+    .q-card .section .label { font-size: 12px; font-weight: 500; color: #9CA3AF; }
+    .q-card .section .text { font-size: 13px; line-height: 18px; color: #4B5563; }
+    .q-card .gap-row { display: flex; align-items: center; gap: 6px; }
+    .q-card .gap-row .gl { font-size: 12px; font-weight: 500; color: #6B7280; }
+
+    /* ===== Rec Item ===== */
+    .rec-item {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+    }
+    .rec-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .rec-item .info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .rec-item .info .t { font-size: 15px; font-weight: 600; color: #0F1419; }
+    .rec-item .info .m { font-size: 12px; color: #9CA3AF; }
+
+    /* ===== Profile ===== */
+    .profile-head { display: flex; align-items: center; gap: 16px; padding: 16px 0; }
+    .profile-head .info { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .profile-head .info .name { font-size: 22px; font-weight: 600; color: #0F1419; }
+    .profile-head .info .sub { font-size: 13px; color: #6B7280; }
+
+    .token-card { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .token-card .th { display: flex; justify-content: space-between; align-items: center; }
+    .token-card .th .t { font-size: 16px; font-weight: 600; color: #1F2937; }
+    .token-card .th .d { font-size: 13px; font-weight: 500; color: #1F2937; cursor: pointer; }
+    .token-card .summary { display: flex; gap: 12px; }
+    .token-card .summary .box {
+      flex: 1; border-radius: 12px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .token-card .summary .box .l { font-size: 12px; color: #6B7280; }
+    .token-card .summary .box .v { font-size: 22px; font-weight: 600; color: #1F2937; }
+    .token-card .breakdown { display: flex; flex-direction: column; gap: 10px; }
+    .token-card .breakdown .t { font-size: 14px; font-weight: 600; color: #1F2937; }
+    .token-card .breakdown .row { display: flex; justify-content: space-between; }
+    .token-card .breakdown .row .l { font-size: 13px; color: #4B5563; }
+    .token-card .breakdown .row .v { font-size: 13px; font-weight: 500; color: #1F2937; }
+
+    .menu-list { display: flex; flex-direction: column; gap: 2px; }
+    .menu-item {
+      display: flex; align-items: center; gap: 12px; padding: 16px;
+      cursor: pointer;
+    }
+    .menu-item img.icon { width: 20px; height: 20px; }
+    .menu-item .t { flex: 1; font-size: 15px; font-weight: 500; color: #0F1419; }
+    .menu-item img.arrow { width: 16px; height: 16px; }
+    .version { text-align: center; font-size: 12px; color: #9CA3AF; }
+
+    /* ===== Tab Bar ===== */
+    .tab-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 12px 18px 14px;
+      z-index: 100;
+      background: linear-gradient(180deg, rgba(247,248,251,0), rgba(247,248,251,0.96) 25%, rgba(247,248,251,1) 100%);
+    }
+    .tab-pill {
+      display: flex;
+      gap: 4px;
+      background: #1b2437;
+      border-radius: 36px;
+      height: 68px;
+      padding: 0 8px;
+      align-items: center;
+      justify-content: space-around;
+      box-shadow: 0 12px 30px rgba(15,23,42,0.22);
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 4px 12px;
+      border-radius: 26px;
+      height: 56px;
+      min-width: 60px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-item.active {
+      background: #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+    }
+    .tab-item svg {
+      width: 24px; height: 24px;
+      transition: all 0.2s ease;
+    }
+    .tab-item { color: rgba(255,255,255,0.72); }
+    .tab-item.active { color: #1d2a3e; }
+    .tab-item .tab-label {
+      font-size: 10px; font-weight: 600;
+      color: rgba(255,255,255,0.68); white-space: nowrap;
+    }
+    .tab-item.active .tab-label { color: #1d2a3e; font-weight: 700; }
+
+    /* ===== Upload / Detail Views ===== */
+    .upload-card,
+    .job-detail-card {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(226,232,240,0.95);
+      border-radius: 18px;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .upload-card .title,
+    .job-detail-card .title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .upload-card .sub,
+    .job-detail-card .sub {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .upload-input,
+    .upload-select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #dbe3ef;
+      background: #f8fafc;
+      font-size: 13px;
+      color: #0f172a;
+    }
+    .upload-input:focus,
+    .upload-select:focus {
+      outline: none;
+      border-color: #8aa7ff;
+      box-shadow: 0 0 0 3px rgba(57, 98, 243, 0.12);
+    }
+    .upload-submit,
+    .ghost-chip {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      background: #111827;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .ghost-chip {
+      background: #eef2ff;
+      color: #2445b8;
+    }
+    .fulfill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .fulfill-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f7f8fc;
+      border: 1px solid #e5ebf5;
+      font-size: 12px;
+      color: #4b5563;
+    }
+    .fulfill-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #0f9f7a;
+      flex-shrink: 0;
+    }
+
+    /* ===== Spacing Helpers ===== */
+    .gap-12 { gap: 12px; }
+    .gap-16 { gap: 16px; }
+    .gap-20 { gap: 20px; }
+    .gap-24 { gap: 24px; }
+    .mt-12 { margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="phone-frame" id="phoneFrame">
+
+    <!-- ========== Screen 1: 首页 ========== -->
+    <div class="screen active" id="screen-home">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons"><img src="assets/svg/2_41.svg" alt=""></div>
+      </div>
+      <div class="content gap-20">
+        <!-- Header -->
+        <div class="header">
+          <div class="greeting">
+            <span class="hi">下午好</span>
+            <span class="date">8月2日 周日</span>
+          </div>
+        </div>
+        <!-- Week Calendar -->
+        <div class="week-cal">
+          <div class="day" data-day="27" onclick="selectHomeDate('27')"><span class="label">一</span><span class="num">27</span></div>
+          <div class="day" data-day="28" onclick="selectHomeDate('28')"><span class="label">二</span><span class="num">28</span></div>
+          <div class="day" data-day="29" onclick="selectHomeDate('29')"><span class="label">三</span><span class="num">29</span></div>
+          <div class="day" data-day="30" onclick="selectHomeDate('30')"><span class="label">四</span><span class="num">30</span></div>
+          <div class="day" data-day="31" onclick="selectHomeDate('31')"><span class="label">五</span><span class="num">31</span></div>
+          <div class="day" data-day="1" onclick="selectHomeDate('1')"><span class="label">六</span><span class="num">1</span></div>
+          <div class="day selected" data-day="2" onclick="selectHomeDate('2')">
+            <span class="label">日</span>
+            <div class="pill"><span class="num">2</span></div>
+          </div>
+        </div>
+        <!-- Upload Card -->
+        <div class="card-dark">
+          <div class="top">
+            <div class="title-block">
+              <span class="t">上传录音</span>
+              <span class="s">AI 自动处理，生成待办与纪要</span>
+            </div>
+          </div>
+          <div class="btns">
+            <div class="btn" onclick="openUpload('study')">
+              <img src="assets/svg/2_74.svg" alt="">
+              <span>学习</span>
+            </div>
+            <div class="btn" onclick="openUpload('interview')">
+              <img src="assets/svg/2_79.svg" alt="">
+              <span>面试</span>
+            </div>
+          </div>
+        </div>
+        <!-- Priority Section -->
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="section-head">
+            <span class="t" id="homeDateLabel">8月2日 周日</span>
+            <span class="more">查看全部</span>
+          </div>
+          <div id="homeFocusList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Screen 2: 学发财了 - 待办 ========== -->
+    <div class="screen" id="screen-research">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons"><img src="assets/svg/2_137.svg" alt=""></div>
+      </div>
+      <div class="content gap-16">
+        <div class="module-head">
+          <span class="t">学发财了</span>
+          <div class="avatar md">C</div>
+        </div>
+        <div class="seg-tab">
+          <div class="seg" data-seg="recordings" onclick="switchScreen('recordings')">录音</div>
+          <div class="seg active" data-seg="research">待办</div>
+        </div>
+        <div class="info-bar">
+          <img src="assets/svg/2_162.svg" alt="">
+          <span>录音处理后自动生成，点击「生成指令」复制 AI 提示词</span>
+        </div>
+        <!-- Todo Card 1 (expanded with AI result) -->
+        <div class="card-white" style="overflow:hidden;">
+          <div class="todo-item">
+            <div style="width:22px;height:22px;border:1.5px solid #8F949E;border-radius:6px;flex-shrink:0;"></div>
+            <div class="info">
+              <span class="t">修改实验数据图表，补充对照组数据</span>
+              <span class="s">来自 7/31 导师讨论 · 23分14秒</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;background:#1F2937;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;color:#fff;">
+              <img src="assets/svg/2_173.svg" alt="" style="width:14px;height:14px;">
+              <span>生成指令</span>
+            </div>
+          </div>
+          <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:6px;background:#F3F4F6;border-radius:8px;padding:8px 12px;">
+              <img src="assets/svg/2_179.svg" alt="" style="width:14px;height:14px;">
+              <span style="font-size:12px;font-weight:500;color:#1F2937;">AI 已生成指令</span>
+            </div>
+            <div style="background:#F8F9FB;border:1.5px solid #E8E8EB;border-radius:10px;padding:12px;font-size:12px;line-height:18px;color:#4B5563;">
+              请帮我修改实验数据图表，补充对照组数据。<br><br>
+              背景：导师在7/31讨论中指出当前实验缺少对照组，需要补充。<br><br>
+              参考纪要：1. 补充空白对照组和阳性对照组 2. 重新绘制柱状图并标注显著性 3. 更新统计方法为 t-test
+            </div>
+            <div style="display:flex;background:#1F2937;border-radius:8px;padding:8px 14px;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+              <img src="assets/svg/2_186.svg" alt="" style="width:14px;height:14px;">
+              <span style="font-size:13px;font-weight:600;color:#fff;">复制完整指令</span>
+            </div>
+          </div>
+        </div>
+        <!-- Todo Card 2 (done) -->
+        <div class="card-white todo-item">
+          <img src="assets/svg/2_191.svg" alt="" style="width:22px;height:22px;">
+          <div class="info">
+            <span class="t" style="color:#9CA3AF;font-weight:500;">整理文献综述第三章，补充引用</span>
+            <span class="s">来自 7/30 课题组会议 · 已完成</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Screen 3: offer来了 - 投递 ========== -->
+    <div class="screen" id="screen-offer">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons"><img src="assets/svg/2_222.svg" alt=""></div>
+      </div>
+      <div class="content gap-16">
+        <div class="module-head">
+          <span class="t">offer来了</span>
+          <div class="avatar md">C</div>
+        </div>
+        <div class="seg-tab">
+          <div class="seg" data-seg="resume" onclick="switchScreen('resume')">简历</div>
+          <div class="seg active" data-seg="offer">投递</div>
+          <div class="seg" data-seg="growth" onclick="switchScreen('growth')">复盘</div>
+        </div>
+        <div class="paste-btn">
+          <img src="assets/svg/2_249.svg" alt="">
+          <span>粘贴面邀邮件，自动抓取面试信息</span>
+          <img src="assets/svg/2_254.svg" alt="" style="width:16px;height:16px;">
+        </div>
+        <!-- App Card Expanded (字节跳动) -->
+        <div class="card-white app-card" data-job-id="byte" onclick="openJobDetail('byte')">
+          <div class="card-head">
+            <div class="logo">字</div>
+            <div class="card-info">
+              <span class="company">字节跳动</span>
+              <span class="pos">后端开发工程师 · 2026届</span>
+            </div>
+            <div class="tag tag-live">面试中</div>
+          </div>
+          <div class="divider"></div>
+          <div class="card-body">
+            <div class="interview-box">
+              <div class="row">
+                <img src="assets/svg/2_269.svg" alt="">
+                <span>8月3日 14:00 - 15:00</span>
+              </div>
+              <div class="row">
+                <img src="assets/svg/2_274.svg" alt="">
+                <span>腾讯会议 821-456-789</span>
+              </div>
+              <span class="src">从面邀邮件自动抓取 · 已生成待办提醒</span>
+            </div>
+            <div class="rec-upload">
+              <img src="assets/svg/2_280.svg" alt="">
+              <div class="up-info">
+                <span class="t">上传面试录音</span>
+                <span class="s">录音后上传，AI 自动复盘分析</span>
+              </div>
+              <div class="up-btn" onclick="event.stopPropagation(); openJobDetail('byte')">查看详情</div>
+            </div>
+          </div>
+        </div>
+        <!-- App Card Simple (腾讯) -->
+        <div class="card-white app-simple" data-job-id="tencent" onclick="openJobDetail('tencent')">
+          <div class="logo">腾</div>
+          <div class="info">
+            <span class="company">腾讯</span>
+            <span class="pos">后端开发 · 8月1日投递</span>
+          </div>
+          <div class="start-btn" onclick="event.stopPropagation(); openJobDetail('tencent')">开启面试</div>
+        </div>
+        <!-- App Card Simple (阿里巴巴) -->
+        <div class="card-white app-simple" data-job-id="alibaba" onclick="openJobDetail('alibaba')">
+          <div class="logo">阿</div>
+          <div class="info">
+            <span class="company">阿里巴巴</span>
+            <span class="pos">Java 开发 · 7月28日投递</span>
+          </div>
+          <div class="start-btn" onclick="event.stopPropagation(); openJobDetail('alibaba')">开启面试</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Screen 4: offer来了 - 简历 ========== -->
+    <div class="screen" id="screen-resume">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons"><img src="assets/svg/2_348.svg" alt=""></div>
+      </div>
+      <div class="content gap-16">
+        <div class="module-head">
+          <span class="t">offer来了</span>
+          <div class="avatar md">C</div>
+        </div>
+        <div class="seg-tab">
+          <div class="seg active" data-seg="resume">简历</div>
+          <div class="seg" data-seg="offer" onclick="switchScreen('offer')">投递</div>
+          <div class="seg" data-seg="growth" onclick="switchScreen('growth')">复盘</div>
+        </div>
+        <!-- Email Input -->
+        <div class="input-card">
+          <div class="label-row">
+            <span class="l">完整邮件</span>
+            <span class="h">粘贴完整邮件内容</span>
+          </div>
+          <textarea id="jdEmailInput" class="upload-input" style="width:100%;min-height:100px;resize:vertical;font-size:13px;line-height:20px;" placeholder="在此粘贴完整邮件内容..."></textarea>
+        </div>
+        <!-- Original Paragraph Input -->
+        <div class="input-card">
+          <div class="label-row">
+            <img src="assets/svg/2_376.svg" alt="">
+            <span class="l">需要修改的段落</span>
+          </div>
+          <textarea id="jdParagraphInput" class="upload-input" style="width:100%;min-height:100px;resize:vertical;font-size:13px;line-height:20px;" placeholder="粘贴当前自我介绍段落..."></textarea>
+        </div>
+        <!-- JD Input -->
+        <div class="input-card">
+          <div class="label-row">
+            <img src="assets/svg/2_383.svg" alt="">
+            <span class="l">目标岗位 JD</span>
+          </div>
+          <textarea id="jdInput" class="upload-input" style="width:100%;min-height:80px;resize:vertical;font-size:13px;line-height:20px;" placeholder="粘贴 JD 内容..."></textarea>
+        </div>
+        <!-- Generate Button -->
+        <div class="gen-btn" id="jdGenBtn" onclick="generateResume()" style="cursor:pointer;">
+          <img src="assets/svg/2_391.svg" alt="">
+          <span>生成定制自我介绍</span>
+        </div>
+        <!-- AI Loading -->
+        <div id="jdLoading" style="display:none;padding:12px;text-align:center;background:#f0f4ff;border-radius:12px;font-size:13px;color:#378ADD;">
+          AI 正在根据 JD 改写中...
+        </div>
+        <!-- Result Card -->
+        <div class="card-white result-card" id="jdResultCard" style="display:none;">
+          <div class="head">
+            <span class="t">修改后的完整邮件</span>
+            <div class="tag tag-gray">AI 生成</div>
+          </div>
+          <div class="body" id="jdResultBody">
+          </div>
+          <div class="copy" onclick="copyText(document.getElementById('jdResultBody').innerText)">
+            <img src="assets/svg/2_403.svg" alt="">
+            <span>复制完整邮件</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Screen 5: offer来了 - 复盘 ========== -->
+    <div class="screen" id="screen-growth">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons"><img src="assets/svg/2_432.svg" alt=""></div>
+      </div>
+      <div class="content gap-16">
+        <div class="module-head">
+          <span class="t">offer来了</span>
+          <div class="avatar md">C</div>
+        </div>
+        <div class="seg-tab">
+          <div class="seg" data-seg="resume" onclick="switchScreen('resume')">简历</div>
+          <div class="seg" data-seg="offer" onclick="switchScreen('offer')">投递</div>
+          <div class="seg active" data-seg="growth">复盘</div>
+        </div>
+        <!-- Stats Card -->
+        <div class="stats-card">
+          <div class="stat">
+            <span class="v">5</span>
+            <span class="l">累计面试</span>
+          </div>
+          <div class="stat">
+            <span class="v">12</span>
+            <span class="l">录音处理</span>
+          </div>
+          <div class="stat">
+            <span class="v">23</span>
+            <span class="l">问题收录</span>
+          </div>
+        </div>
+        <!-- AI Interview Review Input -->
+        <div class="card-white" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:14px;font-weight:700;color:#1F2937;">AI 面试复盘</div>
+          <div style="font-size:12px;color:#6B7280;">粘贴面试问答内容，AI 帮你打分并给出改进建议</div>
+          <textarea id="interviewQAInput" class="upload-input" style="width:100%;min-height:120px;resize:vertical;font-size:13px;line-height:20px;" placeholder="例如：&#10;Q: Redis 持久化机制？&#10;A: 有 RDB 和 AOF 两种..."></textarea>
+          <button class="upload-submit" id="reviewBtn" onclick="reviewInterview()" style="padding:10px 14px;">AI 复盘分析</button>
+          <div id="reviewLoading" style="display:none;padding:12px;text-align:center;background:#f0f4ff;border-radius:12px;font-size:13px;color:#378ADD;">AI 正在分析面试表现...</div>
+          <div id="reviewResult" style="display:none;">
+            <div class="ai-review" style="background:#f8fafc;border-radius:12px;padding:12px;margin-top:8px;">
+              <div class="ai-head">
+                <span class="t">AI 复盘结果</span>
+                <div class="tag tag-gray">AI 生成</div>
+              </div>
+              <div class="scores" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;" id="reviewScores"></div>
+              <div class="suggestion" id="reviewSuggestion" style="font-size:12px;line-height:18px;color:#4B5563;white-space:pre-wrap;"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Question Bank -->
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="section-head">
+            <span class="t">面试问题清单</span>
+            <div style="display:flex;align-items:center;gap:4px;background:#F0F0F2;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:500;color:#6B7280;">
+              <span>后端开发</span>
+              <img src="assets/svg/2_473.svg" alt="" style="width:12px;height:12px;">
+            </div>
+          </div>
+          <!-- Question 1 -->
+          <div class="card-white q-card">
+            <div class="q-head">
+              <span class="t">Redis 持久化机制是怎样的？</span>
+              <div class="tag tag-gray" style="color:#F59E0B;">待提升</div>
+            </div>
+            <div class="section">
+              <span class="label">你的回答</span>
+              <span class="text">提到了 RDB 和 AOF，但没有讲清楚触发条件和数据恢复流程。</span>
+            </div>
+            <div class="section">
+              <span class="label">改进建议</span>
+              <span class="text">分场景回答：RDB 适合做全量备份（save/bgsave），AOF 保证数据安全；恢复时先加载 RDB 再回放 AOF；可结合混合持久化。</span>
+            </div>
+            <div class="gap-row">
+              <span class="gl">知识缺口：</span>
+              <div class="tag tag-gray">Redis 内部实现</div>
+            </div>
+          </div>
+          <!-- Question 2 -->
+          <div class="card-white q-card">
+            <div class="q-head">
+              <span class="t">介绍一下你最有成就感的项目</span>
+              <div class="tag tag-gray" style="color:#10B981;">表现良好</div>
+            </div>
+            <div class="section">
+              <span class="label">你的回答</span>
+              <span class="text">使用 STAR 法则：背景是 XX，任务是优化接口性能，行动是引入缓存+异步处理，结果是 P99 从 800ms 降到 120ms。</span>
+            </div>
+            <div class="gap-row">
+              <span class="gl">知识缺口：</span>
+              <div class="tag tag-gray">项目表达已达标</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Screen 6: 学发财了 - 录音 ========== -->
+    <div class="screen" id="screen-recordings">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons"><img src="assets/svg/2_527.svg" alt=""></div>
+      </div>
+      <div class="content gap-16">
+        <div class="module-head">
+          <span class="t">学发财了</span>
+          <div class="avatar md">C</div>
+        </div>
+        <div class="seg-tab">
+          <div class="seg active" data-seg="recordings">录音</div>
+          <div class="seg" data-seg="research" onclick="switchScreen('research')">待办</div>
+        </div>
+        <div class="info-bar">
+          <img src="assets/svg/2_552.svg" alt="">
+          <span>上传时选择「学习」的录音会集中在这里</span>
+        </div>
+        <div id="recordingsList" style="display:flex;flex-direction:column;gap:12px;"></div>
+      </div>
+    </div>
+
+    <!-- ========== Screen 7: 上传录音 ========== -->
+    <div class="screen" id="screen-upload">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons"><img src="assets/svg/2_527.svg" alt=""></div>
+      </div>
+      <div class="content gap-16">
+        <div class="module-head">
+          <span class="t" id="uploadHeadTitle">上传录音</span>
+        </div>
+        <div class="upload-card">
+          <div class="title" id="uploadModeTitle">学习录音上传</div>
+          <div class="sub" id="uploadModeSub">点击录音按钮开始语音识别，识别完成后 AI 自动生成待办与纪要</div>
+
+          <!-- Voice Recording Button -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0;">
+            <button id="recordBtn" onclick="toggleRecording()" style="
+              width:72px;height:72px;border-radius:50%;border:none;
+              background:#378ADD;color:#fff;font-size:24px;cursor:pointer;
+              display:flex;align-items:center;justify-content:center;
+              transition:all 0.2s;
+            ">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </button>
+            <span id="recordStatus" style="font-size:12px;color:#6B7280;">点击开始录音</span>
+          </div>
+
+          <!-- Transcript textarea -->
+          <div style="margin-top:4px;">
+            <div style="font-size:12px;font-weight:600;color:#1F2937;margin-bottom:6px;">识别文字（可手动编辑）</div>
+            <textarea id="transcriptInput" class="upload-input" style="
+              width:100%;min-height:100px;resize:vertical;font-family:inherit;
+              padding:12px 14px;border-radius:12px;border:1px solid #dbe3ef;
+              background:#f8fafc;font-size:13px;line-height:20px;color:#0f172a;
+            " placeholder="录音识别结果会显示在这里，也可以直接粘贴文字内容..."></textarea>
+          </div>
+
+          <div id="uploadStudyFields">
+            <input class="upload-input" id="studyThemeInput" type="text" placeholder="请输入讨论主题，例如：导师组会 / 文献研讨">
+          </div>
+          <div id="uploadInterviewFields" style="display:none;">
+            <select class="upload-select" id="interviewJobSelect">
+              <option value="">请选择已投递岗位</option>
+              <option value="byte">字节跳动 · 后端开发工程师</option>
+              <option value="tencent">腾讯 · 后端开发</option>
+              <option value="alibaba">阿里巴巴 · Java 开发</option>
+            </select>
+          </div>
+
+          <!-- AI Loading status -->
+          <div id="aiLoading" style="display:none;padding:12px;text-align:center;background:#f0f4ff;border-radius:12px;font-size:13px;color:#378ADD;">
+            AI 正在处理中，请稍候...
+          </div>
+
+          <!-- AI Error status -->
+          <div id="aiError" style="display:none;padding:12px;text-align:center;background:#fef0f0;border-radius:12px;font-size:13px;color:#e24b4a;">
+          </div>
+
+          <button class="upload-submit" id="submitBtn" onclick="submitUpload()">AI 处理并上传</button>
+          <button class="ghost-chip" onclick="switchScreen('home')">返回首页</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Screen 8: 岗位详情 ========== -->
+    <div class="screen" id="screen-jobdetail">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons"><img src="assets/svg/2_222.svg" alt=""></div>
+      </div>
+      <div class="content gap-16">
+        <div class="module-head">
+          <span class="t">岗位详情</span>
+        </div>
+        <div class="job-detail-card">
+          <div class="title" id="jobDetailCompany">字节跳动</div>
+          <div class="sub" id="jobDetailPosition">后端开发工程师 · 2026届</div>
+          <div class="fulfill-list" id="jobDetailStats"></div>
+        </div>
+        <div class="job-detail-card">
+          <div class="title">相关录音</div>
+          <div class="sub">上传后会同步显示在这个岗位的详情页里</div>
+          <div class="fulfill-list" id="jobDetailRecordings"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Screen 9: 我的 ========== -->
+    <div class="screen" id="screen-profile">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="icons"><img src="assets/svg/2_602.svg" alt=""></div>
+      </div>
+      <div class="content gap-24">
+        <!-- Profile Header -->
+        <div class="profile-head">
+          <div class="info">
+            <span class="name">Cassy</span>
+            <span class="sub">专注科研与求职的个人工作台</span>
+          </div>
+        </div>
+        <!-- AI Token Stats -->
+        <div class="card-white token-card">
+          <div class="th">
+            <span class="t">AI Token 消耗</span>
+            <span class="d">查看详情</span>
+          </div>
+          <div class="summary">
+            <div class="box" style="background:#F3F4F6;">
+              <span class="l">本月用量</span>
+              <span class="v">12.5K</span>
+            </div>
+            <div class="box" style="background:#F5F7FA;">
+              <span class="l">累计用量</span>
+              <span class="v">86.3K</span>
+            </div>
+          </div>
+          <div class="breakdown">
+            <span class="t">功能消耗明细</span>
+            <div class="row"><span class="l">录音处理</span><span class="v">5.2K tokens</span></div>
+            <div class="row"><span class="l">简历生成</span><span class="v">4.8K tokens</span></div>
+            <div class="row"><span class="l">面试复盘</span><span class="v">2.5K tokens</span></div>
+          </div>
+        </div>
+        <!-- Menu List -->
+        <div class="card-white menu-list">
+          <div class="menu-item">
+            <img class="icon" src="assets/svg/2_625.svg" alt="">
+            <span class="t">设置</span>
+            <img class="arrow" src="assets/svg/2_629.svg" alt="">
+          </div>
+          <div class="menu-item">
+            <img class="icon" src="assets/svg/2_632.svg" alt="">
+            <span class="t">关于</span>
+            <img class="arrow" src="assets/svg/2_636.svg" alt="">
+          </div>
+        </div>
+        <span class="version">WorkBuddy Personal v0.1</span>
+      </div>
+    </div>
+
+    <!-- ========== Tab Bar (Global) ========== -->
+    <div class="tab-bar">
+      <div class="tab-pill">
+        <div class="tab-item active" data-tab="home" onclick="switchScreen('home')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span class="tab-label">首页</span>
+        </div>
+        <div class="tab-item" data-tab="research" onclick="switchScreen('research')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span class="tab-label">学发财了</span>
+        </div>
+        <div class="tab-item" data-tab="offer" onclick="switchScreen('offer')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <span class="tab-label">offer来了</span>
+        </div>
+        <div class="tab-item" data-tab="profile" onclick="switchScreen('profile')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="tab-label">我的</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const storageKey = 'personal-workbench-v3';
+
+    const defaultState = {
+      activeDate: '2',
+      uploadType: 'study',
+      selectedJob: 'byte',
+      homeDates: {
+        '27': {
+          label: '8月27日 周一',
+          focus: [
+            { title: '整理导师反馈并补充实验计划', meta: '学发财了 · 8/27 导师讨论', tag: '科研' },
+            { title: '准备字节二面 Redis 相关问题', meta: 'offer来了 · 8/27 面试准备', tag: '面试' }
+          ],
+          reminder: { title: '字节跳动 · 后端开发 二面', sub: '明天 14:00 · 腾讯会议 821-456-789' }
+        },
+        '28': {
+          label: '8月28日 周二',
+          focus: [
+            { title: '补充实验图表说明和对照组数据', meta: '学发财了 · 8/28 组会', tag: '科研' },
+            { title: '梳理腾讯后端开发自我介绍', meta: 'offer来了 · 8/28 简历', tag: '面试' }
+          ],
+          reminder: { title: '腾讯 · 后端开发', sub: '今天 18:00 · 线上沟通' }
+        },
+        '29': {
+          label: '8月29日 周三',
+          focus: [
+            { title: '完成文献综述第三章补充引用', meta: '学发财了 · 8/29 文献研讨', tag: '科研' },
+            { title: '准备阿里 Java 开发技术清单', meta: 'offer来了 · 8/29 技术复盘', tag: '面试' }
+          ],
+          reminder: { title: '阿里巴巴 · Java 开发', sub: '今天 16:00 · 线上笔试复盘' }
+        },
+        '30': {
+          label: '8月30日 周四',
+          focus: [
+            { title: '更新实验统计方法与图表说明', meta: '学发财了 · 8/30 导师检查', tag: '科研' },
+            { title: '整理面试中项目里的亮点表述', meta: 'offer来了 · 8/30 复盘', tag: '面试' }
+          ],
+          reminder: { title: '字节跳动 · 后端开发 二面', sub: '明天 14:00 · 腾讯会议 821-456-789' }
+        },
+        '31': {
+          label: '8月31日 周五',
+          focus: [
+            { title: '补齐实验结果图表与对照组说明', meta: '学发财了 · 8/31 组会', tag: '科研' },
+            { title: '完成每日面试复盘问题归档', meta: 'offer来了 · 8/31 复盘', tag: '面试' }
+          ],
+          reminder: { title: '腾讯 · 后端开发', sub: '今天 19:00 · 复盘回顾' }
+        },
+        '1': {
+          label: '8月1日 周六',
+          focus: [
+            { title: '梳理本周实验进展和待补内容', meta: '学发财了 · 8/1 周报', tag: '科研' },
+            { title: '补充工作经历在简历中的表达', meta: 'offer来了 · 8/1 简历优化', tag: '面试' }
+          ],
+          reminder: { title: '阿里巴巴 · Java 开发', sub: '明天 10:00 · 内推跟进' }
+        },
+        '2': {
+          label: '8月2日 周日',
+          focus: [
+            { title: '修改实验数据图表，补充对照组', meta: '学发财了 · 7/31 导师讨论', tag: '科研' },
+            { title: '字节面试准备：Redis 持久化原理', meta: 'offer来了 · 8/3 二面 14:00', tag: '面试' }
+          ],
+          reminder: { title: '字节跳动 · 后端开发 二面', sub: '明天 14:00 · 腾讯会议 821-456-789' }
+        }
+      },
+      recordings: {
+        study: [
+          { title: '导师组会讨论', meta: '8月2日 · 23分14秒', status: '已处理' },
+          { title: '文献研讨', meta: '7月30日 · 18分22秒', status: '处理中' },
+          { title: '课题组例会', meta: '7月28日 · 32分05秒', status: '已处理' }
+        ],
+        interview: {
+          byte: [
+            { title: '字节二面录音', meta: '8月3日 · 26分08秒', status: '已处理' }
+          ],
+          tencent: [],
+          alibaba: []
+        }
+      },
+      jobs: {
+        byte: {
+          company: '字节跳动',
+          position: '后端开发工程师 · 2026届',
+          status: '面试中',
+          time: '8月3日 14:00 - 15:00',
+          meeting: '腾讯会议 821-456-789',
+          note: '从面邀邮件自动抓取 · 已生成待办提醒'
+        },
+        tencent: {
+          company: '腾讯',
+          position: '后端开发 · 8月1日投递',
+          status: '待定',
+          time: '8月1日 18:00 - 19:00',
+          meeting: '线上沟通',
+          note: '简历已投递 · 等待面试进度'
+        },
+        alibaba: {
+          company: '阿里巴巴',
+          position: 'Java 开发 · 7月28日投递',
+          status: '等待笔试',
+          time: '7月28日 16:00 - 17:00',
+          meeting: '线上笔试',
+          note: '已提交简历 · 等待后续安排'
+        }
+      }
+    };
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        return raw ? JSON.parse(raw) : structuredClone(defaultState);
+      } catch {
+        return structuredClone(defaultState);
+      }
+    }
+
+    const state = loadState();
+
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function renderHomeFocus() {
+      const dateKey = state.activeDate || '2';
+      const payload = state.homeDates[dateKey] || state.homeDates['2'];
+      const listNode = document.getElementById('homeFocusList');
+      const dateLabel = document.getElementById('homeDateLabel');
+      const reminderTitle = document.getElementById('homeReminderTitle');
+      const reminderSub = document.getElementById('homeReminderSub');
+
+      if (dateLabel) dateLabel.textContent = payload.label;
+      if (reminderTitle) reminderTitle.textContent = payload.reminder.title;
+      if (reminderSub) reminderSub.textContent = payload.reminder.sub;
+
+      if (!listNode) return;
+      listNode.innerHTML = payload.focus.map((item) => `
+        <div class="card-white todo-item">
+          <div class="info">
+            <span class="t">${item.title}</span>
+            <span class="s">${item.meta}</span>
+          </div>
+          <div class="tag ${item.tag === '科研' ? 'tag-green' : 'tag-purple'}">${item.tag}</div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.week-cal .day').forEach((node) => {
+        const isCurr = String(node.dataset.day) === String(dateKey);
+        node.classList.toggle('selected', isCurr);
+        const pill = node.querySelector('.pill');
+        if (pill) {
+          if (isCurr) {
+            pill.style.display = 'inline-flex';
+          } else {
+            pill.style.display = 'none';
+          }
+        }
+      });
+    }
+
+    function selectHomeDate(day) {
+      state.activeDate = String(day);
+      saveState();
+      renderHomeFocus();
+    }
+
+    function openUpload(type) {
+      state.uploadType = type;
+      saveState();
+      const isStudy = type === 'study';
+      document.getElementById('uploadHeadTitle').textContent = isStudy ? '学习录音上传' : '面试录音上传';
+      document.getElementById('uploadModeTitle').textContent = isStudy ? '学习录音上传' : '面试录音上传';
+      document.getElementById('uploadModeSub').textContent = isStudy
+        ? '点击录音按钮开始语音识别，识别完成后 AI 自动生成待办与纪要'
+        : '选择已投递岗位后录音，AI 会生成面试待办与纪要';
+      document.getElementById('uploadStudyFields').style.display = isStudy ? 'block' : 'none';
+      document.getElementById('uploadInterviewFields').style.display = isStudy ? 'none' : 'block';
+      document.getElementById('transcriptInput').value = '';
+      document.getElementById('aiLoading').style.display = 'none';
+      document.getElementById('aiError').style.display = 'none';
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('submitBtn').textContent = 'AI 处理并上传';
+      switchScreen('upload');
+    }
+
+    function submitUpload() {
+      const transcript = document.getElementById('transcriptInput').value.trim();
+      const submitBtn = document.getElementById('submitBtn');
+      const loadingDiv = document.getElementById('aiLoading');
+      const errorDiv = document.getElementById('aiError');
+
+      if (!transcript) {
+        alert('请先录音或输入文字内容');
+        return;
+      }
+
+      const isStudy = state.uploadType === 'study';
+      const topic = isStudy ? document.getElementById('studyThemeInput').value.trim() : '';
+      const jobId = !isStudy ? document.getElementById('interviewJobSelect').value : '';
+
+      if (!isStudy && !jobId) {
+        alert('请选择已投递岗位');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '处理中...';
+      loadingDiv.style.display = 'block';
+      errorDiv.style.display = 'none';
+
+      fetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript,
+          topic,
+          mode: isStudy ? 'study' : 'interview'
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'AI 处理并上传';
+        loadingDiv.style.display = 'none';
+
+        if (isStudy) {
+          state.recordings.study.unshift({
+            title: topic || '录音转写',
+            meta: '已处理 · AI 生成',
+            status: '已处理',
+            summary: data.summary,
+            todos: data.todos,
+            notes: data.notes
+          });
+        } else {
+          state.recordings.interview[jobId].unshift({
+            title: state.jobs[jobId].company + ' 面试录音',
+            meta: '已处理 · AI 生成',
+            status: '已处理',
+            summary: data.summary,
+            todos: data.todos,
+            notes: data.notes
+          });
+          state.selectedJob = jobId;
+        }
+        saveState();
+        renderRecordings();
+        if (!isStudy) renderJobDetail();
+        switchScreen(isStudy ? 'recordings' : 'jobdetail');
+      })
+      .catch(err => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'AI 处理并上传';
+        loadingDiv.style.display = 'none';
+        errorDiv.textContent = '处理失败: ' + err.message;
+        errorDiv.style.display = 'block';
+      });
+    }
+
+    // ===== Voice Recording (Web Speech API) =====
+    let recognition = null;
+    let isRecording = false;
+
+    function toggleRecording() {
+      if (isRecording) {
+        stopRecording();
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('当前浏览器不支持语音识别，请使用 Chrome 或 Safari，或直接粘贴文字内容');
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = 'zh-CN';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      const btn = document.getElementById('recordBtn');
+      const status = document.getElementById('recordStatus');
+      const transcriptInput = document.getElementById('transcriptInput');
+
+      recognition.onstart = () => {
+        isRecording = true;
+        btn.style.background = '#e24b4a';
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+        status.textContent = '录音中... 点击停止';
+        status.style.color = '#e24b4a';
+      };
+
+      recognition.onresult = (event) => {
+        let finalText = '';
+        let interimText = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            finalText += event.results[i][0].transcript;
+          } else {
+            interimText += event.results[i][0].transcript;
+          }
+        }
+        if (finalText) {
+          transcriptInput.value += finalText;
+        }
+      };
+
+      recognition.onerror = (event) => {
+        status.textContent = '录音出错: ' + event.error;
+        status.style.color = '#e24b4a';
+        stopRecording();
+      };
+
+      recognition.onend = () => {
+        stopRecording();
+      };
+
+      recognition.start();
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      const btn = document.getElementById('recordBtn');
+      const status = document.getElementById('recordStatus');
+      btn.style.background = '#378ADD';
+      btn.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+      status.textContent = '录音结束';
+      status.style.color = '#6B7280';
+      if (recognition) {
+        try { recognition.stop(); } catch(e) {}
+      }
+    }
+
+    // ===== JD Analyze (Resume page) =====
+    function generateResume() {
+      const email = document.getElementById('jdEmailInput').value.trim();
+      const paragraph = document.getElementById('jdParagraphInput').value.trim();
+      const jd = document.getElementById('jdInput').value.trim();
+      const genBtn = document.getElementById('jdGenBtn');
+      const loading = document.getElementById('jdLoading');
+      const resultCard = document.getElementById('jdResultCard');
+      const resultBody = document.getElementById('jdResultBody');
+
+      if (!paragraph || !jd) {
+        alert('请填写"需要修改的段落"和"目标岗位 JD"');
+        return;
+      }
+
+      genBtn.style.opacity = '0.5';
+      genBtn.style.pointerEvents = 'none';
+      loading.style.display = 'block';
+      resultCard.style.display = 'none';
+
+      fetch('/api/jd-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, paragraph, jd })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        genBtn.style.opacity = '1';
+        genBtn.style.pointerEvents = 'auto';
+        loading.style.display = 'none';
+        resultBody.innerHTML = data.content.replace(/\n/g, '<br>');
+        resultCard.style.display = 'block';
+      })
+      .catch(err => {
+        genBtn.style.opacity = '1';
+        genBtn.style.pointerEvents = 'auto';
+        loading.style.display = 'none';
+        alert('生成失败: ' + err.message);
+      });
+    }
+
+    // ===== Interview Review (Growth page) =====
+    function reviewInterview() {
+      const qaText = document.getElementById('interviewQAInput').value.trim();
+      const reviewBtn = document.getElementById('reviewBtn');
+      const loading = document.getElementById('reviewLoading');
+      const result = document.getElementById('reviewResult');
+      const scoresDiv = document.getElementById('reviewScores');
+      const suggestionDiv = document.getElementById('reviewSuggestion');
+
+      if (!qaText) {
+        alert('请粘贴面试问答内容');
+        return;
+      }
+
+      reviewBtn.disabled = true;
+      reviewBtn.textContent = '分析中...';
+      loading.style.display = 'block';
+      result.style.display = 'none';
+
+      fetch('/api/interview-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qaText, jobInfo: '后端开发' })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        reviewBtn.disabled = false;
+        reviewBtn.textContent = 'AI 复盘分析';
+        loading.style.display = 'none';
+
+        let scoresHtml = '<div class="score" style="text-align:center;padding:8px 12px;background:#fff;border-radius:8px;"><div class="label" style="font-size:11px;color:#6B7280;">总分</div><div class="value" style="font-size:18px;font-weight:700;color:#378ADD;">' + data.score + '</div></div>';
+        for (const [k, v] of Object.entries(data.scores)) {
+          scoresHtml += '<div class="score" style="text-align:center;padding:8px 12px;background:#fff;border-radius:8px;"><div class="label" style="font-size:11px;color:#6B7280;">' + k + '</div><div class="value" style="font-size:15px;font-weight:700;">' + v + '</div></div>';
+        }
+        scoresDiv.innerHTML = scoresHtml;
+        suggestionDiv.textContent = data.suggestion;
+        result.style.display = 'block';
+      })
+      .catch(err => {
+        reviewBtn.disabled = false;
+        reviewBtn.textContent = 'AI 复盘分析';
+        loading.style.display = 'none';
+        alert('分析失败: ' + err.message);
+      });
+    }
+
+    // ===== Copy text utility =====
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('已复制到剪贴板');
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('已复制到剪贴板');
+      });
+    }
+
+    function renderRecordings() {
+      const list = document.getElementById('recordingsList');
+      if (!list) return;
+      list.innerHTML = state.recordings.study.map((item) => `
+        <div class="card-white rec-item">
+          <div class="dot" style="background:${item.status === '已处理' ? '#1F2937' : '#F59E0B'};"></div>
+          <div class="info">
+            <span class="t">${item.title}</span>
+            <span class="m">${item.meta}</span>
+          </div>
+          <div class="tag tag-gray" style="background:${item.status === '已处理' ? '#e7f1ff' : '#fff3df'}; color:${item.status === '已处理' ? '#3b82f6' : '#b45309'};">${item.status}</div>
+        </div>
+      `).join('');
+    }
+
+    function openJobDetail(jobId) {
+      state.selectedJob = jobId;
+      saveState();
+      renderJobDetail();
+      switchScreen('jobdetail');
+    }
+
+    function renderJobDetail() {
+      const job = state.jobs[state.selectedJob] || state.jobs.byte;
+      document.getElementById('jobDetailCompany').textContent = job.company;
+      document.getElementById('jobDetailPosition').textContent = job.position;
+      const stats = document.getElementById('jobDetailStats');
+      stats.innerHTML = `
+        <div class="fulfill-pill"><span class="dot"></span><span>${job.status}</span></div>
+        <div class="fulfill-pill"><span class="dot"></span><span>${job.time}</span></div>
+        <div class="fulfill-pill"><span class="dot"></span><span>${job.meeting}</span></div>
+        <div class="fulfill-pill"><span class="dot"></span><span>${job.note}</span></div>
+      `;
+
+      const recordings = state.recordings.interview[state.selectedJob] || [];
+      const list = document.getElementById('jobDetailRecordings');
+      list.innerHTML = recordings.length
+        ? recordings.map((item) => `
+          <div class="fulfill-pill"><span class="dot"></span><span>${item.title} · ${item.meta}</span></div>
+        `).join('')
+        : '<div class="fulfill-pill"><span class="dot"></span><span>暂未上传该岗位录音</span></div>';
+    }
+
+    document.querySelectorAll('.tab-item').forEach((t, i) => {
+      t.classList.toggle('active', i === 0);
+    });
+
+    // ===== Screen → Tab mapping =====
+    const screenToTab = {
+      home: 0, research: 1, recordings: 1,
+      offer: 2, resume: 2, growth: 2, jobdetail: 2,
+      upload: 0, profile: 3
+    };
+
+    // ===== Switch Screen =====
+    function switchScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById('screen-' + id);
+      if (!target) return;
+      target.classList.add('active');
+
+      if (id === 'home') renderHomeFocus();
+      if (id === 'recordings') renderRecordings();
+      if (id === 'jobdetail') renderJobDetail();
+
+      const content = target.querySelector('.content');
+      if (content) content.scrollTop = 0;
+
+      document.querySelectorAll('.tab-item').forEach((t, i) => {
+        t.classList.toggle('active', i === (screenToTab[id] ?? 0));
+      });
+
+      document.querySelectorAll('.seg-tab').forEach((segTab) => {
+        const activeSeg = segTab.querySelector(`.seg[data-seg="${id}"]`);
+        segTab.querySelectorAll('.seg').forEach(seg => seg.classList.remove('active'));
+        if (activeSeg) activeSeg.classList.add('active');
+      });
+    }
+
+    renderHomeFocus();
+    renderRecordings();
+    renderJobDetail();
+    switchScreen('home');
+
+    // ===== Responsive Scaling =====
+    function scaleFrame() {
+      const frame = document.getElementById('phoneFrame');
+      const scale = Math.min(window.innerWidth / 375, window.innerHeight / 812, 1);
+      frame.style.transform = `scale(${scale})`;
+      frame.style.position = 'absolute';
+      frame.style.left = (window.innerWidth - 375 * scale) / 2 + 'px';
+      frame.style.top = (window.innerHeight - 812 * scale) / 2 + 'px';
+    }
+    scaleFrame();
+    window.addEventListener('resize', scaleFrame);
+  </script>
+</body>
+</html>
